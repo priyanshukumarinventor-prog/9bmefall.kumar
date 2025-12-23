@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* 1. GLOBAL & BACKGROUND */
+        * { box-sizing: border-box; }
+        body, html {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #000; color: white; overflow: hidden;
+        }
+
+        #login-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/vivid-blurred-colorful-wallpaper-background.jpg');
+            background-size: cover; background-position: center; z-index: 1;
+        }
+
+        /* 2. PRELOADER (45s) */
+        #preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999;
+            cursor: pointer;
+        }
+        .loader-container {
+            width: 100%; height: 25vh; background: rgba(255, 255, 255, 0.03);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-top: 1px solid rgba(0, 123, 255, 0.3); border-bottom: 1px solid rgba(0, 123, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .progress-circle {
+            position: relative; width: 110px; height: 110px; border-radius: 50%;
+            background: conic-gradient(#007bff 0deg, #222 0deg);
+            display: flex; justify-content: center; align-items: center; margin-bottom: 15px;
+        }
+        .progress-circle::before { content: ""; position: absolute; width: 100px; height: 100px; background: #000; border-radius: 50%; }
+        .progress-circle img { position: relative; width: 80px; height: 80px; border-radius: 50%; z-index: 2; object-fit: cover; border: 2px solid #007bff; }
+        .pulsing { animation: iconPulse 2s infinite ease-in-out; }
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(0, 123, 255, 0.6); }
+            50% { transform: scale(1.1); box-shadow: 0 0 35px rgba(0, 123, 255, 0.9); }
+        }
+
+        /* 3. REELS VIEW (90% WIDTH) */
+        #video-view { display: none; height: 100vh; width: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; z-index: 5; scrollbar-width: none; }
+        #video-view::-webkit-scrollbar { display: none; }
+        
+        .reel { 
+            position: relative; height: 100vh; width: 100%; 
+            scroll-snap-align: start; display: flex; justify-content: center; align-items: center; 
+            background: #000; 
+        }
+
+        .video-wrapper {
+            width: 90%; height: 85vh; border-radius: 25px; overflow: hidden;
+            position: relative; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .reel video { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Global Mute Button */
+        #global-mute-btn {
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+            width: 45px; height: 45px; background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%; color: white; display: none; justify-content: center; align-items: center;
+            cursor: pointer; font-size: 18px;
+        }
+
+        /* Tap Ripple Icon */
+        .video-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; justify-content: center; align-items: center; }
+        .play-pause-icon { font-size: 60px; color: white; opacity: 0; transition: 0.3s; transform: scale(0.5); }
+        .play-pause-icon.show { opacity: 0.7; transform: scale(1.2); }
+
+        /* 4. CHAT & SIDEBAR (Fixed) */
+        #chat-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 1001; }
+        .chat-container { width: 90%; max-width: 400px; height: 70vh; background: #1a1a1a; border-radius: 25px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #333; }
+        #chat-window { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: #007bff; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; align-self: flex-end; max-width: 80%; font-size: 14px; }
+        .chat-input-area { padding: 15px; display: flex; gap: 10px; background: #111; }
+        .chat-input-area input { flex: 1; background: #222; border: none; padding: 12px; border-radius: 20px; color: white; outline: none; }
+
+        #main-sidebar { position: fixed; left: 15px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 25px; z-index: 100; background: rgba(255,255,255,0.1); padding: 25px 15px; border-radius: 40px; backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-icon { font-size: 22px; cursor: pointer; transition: 0.3s; text-align: center; color: white; opacity: 0.7; }
+        .sidebar-icon:hover { opacity: 1; color: #007bff; }
+
+        /* 5. AUTH CARDS */
+        .content-area { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 10; }
+        .card { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(25px); padding: 40px; border-radius: 30px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #333; }
+        .login-input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #444; background: #111; color: white; outline: none; }
+        .login-btn { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="global-mute-btn" onclick="toggleGlobalMute()">
+        <i id="mute-icon" class="fas fa-volume-mute"></i>
+    </div>
+
+    <audio id="startup-music" preload="auto" loop>
+        <source src="https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/Windows_11_startup_sound_REMIX_256KBPS%20(1).mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="preloader" onclick="startApp()">
+        <div class="loader-container">
+            <div class="progress-circle" id="circle">
+                <img src="https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/jjk.jpg" alt="JJK Icon" id="jjk-icon">
+            </div>
+            <div id="loader-text" style="line-height: 1.5;">TAP TO START <br><span style="font-size: 10px; opacity: 0.7;">DOMAIN EXPANSION SUCCESSFULLY FINISHED </span></div>
+        </div>
+    </div>
+
+    <div id="login-bg"></div>
+
+    <div id="main-sidebar">
+        <div class="sidebar-icon" onclick="showHome()"><i class="fas fa-home"></i></div>
+        <div class="sidebar-icon" onclick="startReels()"><i class="fas fa-play-circle"></i></div>
+        <div class="sidebar-icon" onclick="toggleChat(true)"><i class="fas fa-comment-dots"></i></div>
+    </div>
+
+    <div class="content-area" id="ui-layer">
+        <div id="form-view" class="card">
+            <h2 style="letter-spacing: 2px;">SECURE ACCESS</h2>
+            <input type="text" id="input1" class="login-input" placeholder="User ID">
+            <input type="password" id="input2" class="login-input" placeholder="Passcode">
+            <button class="login-btn" onclick="saveData()">Login</button>
+        </div>
+        <div id="success-view" class="card" style="display: none;">
+            <h2 style="color: #4ade80;">Success</h2>
+            <p>Welcome .</p>
+        </div>
+    </div>
+
+    <div id="chat-overlay">
+        <div class="chat-container">
+            <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content: space-between; background: #111;">
+                <span>Cursed Chat</span>
+                <i class="fas fa-times" onclick="toggleChat(false)" style="cursor:pointer"></i>
+            </div>
+            <div id="chat-window"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chatMsg" placeholder="Send a message...">
+                <button onclick="sendChatMsg()" style="background:#007bff; border:none; color:white; width:40px; border-radius:50%"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="video-view"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // 1. FIREBASE SETUP
+        const firebaseConfig = { apiKey: "AIzaSyCt03nps4PQVEhfrJdmZkPO3_uVCKG8_SU", authDomain: "ohkh-1cc25.firebaseapp.com", projectId: "ohkh-1cc25", storageBucket: "ohkh-1cc25.firebasestorage.app", messagingSenderId: "758248458934", appId: "1:758248458934:web:9e408e980ad194d64af417" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database().ref('global_chat');
+
+        // 2. VIDEO LINKS
+        const videoLinks = [
+ "https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/_Sung_Jin_woo_Coldest_Moment_Arise_Edit_-Solo_Leveling_sungjinwoo_sololeveling_arise_anime_720P.mp4",
+"https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/Shadow_Monarch_and_his_3_Commanders_shorts_sololeveling_edit_anime_manhwa_trending_manga_amv_fyp_720P.mp4",
+            "https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/videoplayback.mp4",
+            "https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/videoplayback%20(1).mp4", 
+            "https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/videoplayback%20(2).mp4",
+            "https://raw.githubusercontent.com/priyanshukumarinventor-prog/9bmefall.kumar/main/Jinwoo_Shadow_Army_-_Solo_Leveling_Season_2_Episode_7_Edit_anime_sololeveling_viralvideo_shorts_720P.mp4"
+        ];
+
+        let music = document.getElementById('startup-music');
+        let appStarted = false;
+        let isGlobalMuted = true;
+
+        // 3. PRELOADER & AUDIO SYNC
+        function startApp() {
+            if (appStarted) return;
+            appStarted = true;
+            music.play();
+            const circle = document.getElementById('circle');
+            const txt = document.getElementById('loader-text');
+            const icon = document.getElementById('jjk-icon');
+            icon.classList.add('pulsing');
+            
+            let sec = 0;
+            const timer = setInterval(() => {
+                sec++;
+                circle.style.background = `conic-gradient(#007bff ${(sec/45)*360}deg, #222 0deg)`;
+                if(sec%10==0) txt.innerHTML = "Refining Barrier...<br><span style='font-size:10px; opacity:0.5;'>Analyzing Cursed Energy ;Connected to Unixfall</span>";
+                if(sec>=45) { 
+                    clearInterval(timer); 
+                    document.getElementById('preloader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('preloader').remove(), 1000);
+                }
+            }, 1000);
+        }
+
+        // 4. AUTH & SUCCESS
+        function saveData() { 
+            music.pause(); music.currentTime = 0;
+            document.getElementById('form-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
+            document.getElementById('main-sidebar').style.display = 'flex';
+        }
+
+        // 5. REEL LOGIC
+        function startReels() {
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('login-bg').style.display = 'none';
+            document.getElementById('global-mute-btn').style.display = 'flex';
+            const container = document.getElementById('video-view');
+            container.style.display = 'block';
+            
+            if (container.innerHTML === "") {
+                videoLinks.forEach(link => {
+                    const div = document.createElement('div');
+                    div.className = 'reel';
+                    div.innerHTML = `
+                        <div class="video-wrapper">
+                            <video loop playsinline muted src="${link}"></video>
+                            <div class="video-overlay"><i class="fas fa-play play-pause-icon"></i></div>
+                        </div>
+                    `;
+                    div.onclick = () => handleVideoTap(div);
+                    container.appendChild(div);
+                });
+                setupObserver();
+            }
+        }
+
+        function handleVideoTap(reel) {
+            const v = reel.querySelector('video');
+            const icon = reel.querySelector('.play-pause-icon');
+            if (v.paused) {
+                v.play();
+                icon.className = "fas fa-play play-pause-icon show";
+            } else {
+                v.pause();
+                icon.className = "fas fa-pause play-pause-icon show";
+            }
+            setTimeout(() => icon.classList.remove('show'), 600);
+        }
+
+        function toggleGlobalMute() {
+            isGlobalMuted = !isGlobalMuted;
+            const icon = document.getElementById('mute-icon');
+            document.querySelectorAll('video').forEach(v => v.muted = isGlobalMuted);
+            icon.className = isGlobalMuted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+        }
+
+        function setupObserver() {
+            const obs = new IntersectionObserver(entries => {
+                entries.forEach(e => {
+                    const v = e.target.querySelector('video');
+                    if (e.isIntersecting) { 
+                        v.play().catch(()=>{}); 
+                        v.muted = isGlobalMuted; 
+                    } else { 
+                        v.pause(); 
+                    }
+                });
+            }, { threshold: 0.6 });
+            document.querySelectorAll('.reel').forEach(r => obs.observe(r));
+        }
+
+        // 6. CHAT & NAVIGATION
+        function toggleChat(s) { document.getElementById('chat-overlay').style.display = s ? 'flex' : 'none'; }
+        
+        function sendChatMsg() {
+            const val = document.getElementById('chatMsg').value;
+            if(val) { db.push({ msg: val }); document.getElementById('chatMsg').value = ''; }
+        }
+
+        db.on('child_added', (snap) => {
+            const d = document.createElement('div');
+            d.className = 'msg'; d.innerText = snap.val().msg;
+            document.getElementById('chat-window').appendChild(d);
+            document.getElementById('chat-window').scrollTop = 9999;
+        });
+
+        function showHome() {
+            document.getElementById('video-view').style.display = 'none';
+            document.getElementById('global-mute-btn').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'flex';
+            document.getElementById('login-bg').style.display = 'block';
+            document.querySelectorAll('video').forEach(v => v.pause());
+        }
+    </script>
+</body>
+</html>
